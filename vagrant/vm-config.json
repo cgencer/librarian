@@ -1,187 +1,224 @@
 {
-    "run_list": [
-        "git",
-        "nginx",
-        "tools",
-        "custom"
-    ],
-    "packages_node_0": [
-        "run_list": [
-            "git",
-            "nginx",
-            "tools",
-            "custom"
-        ]
-    ],
-    "packages_node_1": [
-        "run_list": [
-            "git",
-            "tools",
-            "custom"
-        ]
-    ],
-    "packages_node_2": [
-        "run_list": [
-            "git",
-            "tools",
-            "custom"
-        ]
-    ],
-    "packages_node_3": [
-        "run_list": [
-            "git",
-            "tools",
-            "custom"
-        ]
-    ],
-    "defaults": {
-        "git_user": {
-            "email": "email",
-            "username": "username",
-            "private_key": "privateKey"
+    "packages": {
+        "node_0": {
+            "description": "This one is the main access point, holding our nginx reverse proxy / web server",
+            "run_list": [
+                "git",
+                "nginx",
+                "apache2",
+                "tools",
+                "custom"
+            ],
+            "defaults": [{
+                "nginx": {
+                    "dir": "/etc/nginx",
+                    "log_dir": "/var/log/nginx",
+                    "binary": "/usr/sbin/nginx",
+                    "user": "www-data",
+                    "init_style": "runit",
+                    "pid": "/var/run/nginx.pid",
+                    "worker_connections": "1024"
+                }
+            }]
         },
-        "postgresql": {
-            "config": {
-                "listen_addresses": "*",
-                "port": "5432"
-            },
-            "pg_hba": [{
-                "type": "local",
-                "db": "postgres",
-                "user": "postgres",
-                "addr": "nil",
-                "method": "trust"
-            }, {
-                "type": "host",
-                "db": "all",
-                "user": "all",
-                "addr": "0.0.0.0/0",
-                "method": "md5"
-            }, {
-                "type": "host",
-                "db": "all",
-                "user": "all",
-                "addr": "::1/0",
-                "method": "md5"
-            }],
-            "password": {
-                "postgres": "super_secret"
-            }
+        "node_1": {
+            "run_list": [
+                "git",
+                "nodejs",
+                "postgres",
+                "tools",
+                "custom"
+            ],
+            "defaults": [{
+                "git_user": {
+                    "email": "email",
+                    "username": "username",
+                    "private_key": "privateKey"
+                },
+                "postgresql": {
+                    "config": {
+                        "listen_addresses": "*",
+                        "port": "5432"
+                    },
+                    "pg_hba": [{
+                        "type": "local",
+                        "db": "postgres",
+                        "user": "postgres",
+                        "addr": "nil",
+                        "method": "trust"
+                    }, {
+                        "type": "host",
+                        "db": "all",
+                        "user": "all",
+                        "addr": "0.0.0.0/0",
+                        "method": "md5"
+                    }, {
+                        "type": "host",
+                        "db": "all",
+                        "user": "all",
+                        "addr": "::1/0",
+                        "method": "md5"
+                    }],
+                    "password": {
+                        "postgres": "super_secret"
+                    }
+                }
+            }]
         },
-        "redis": {
-            "bind": "127.0.0.1",
-            "port": "6379",
-            "config_path": "/etc/redis/redis.conf",
-            "daemonize": "yes",
-            "timeout": "300",
-            "loglevel": "notice"
+        "node_2": {
+            "run_list": [
+                "git",
+                "redis",
+                "tools",
+                "custom"
+            ],
+            "defaults": [{
+                "redis": {
+                    "bind": "127.0.0.1",
+                    "port": "6379",
+                    "config_path": "/etc/redis/redis.conf",
+                    "daemonize": "yes",
+                    "timeout": "300",
+                    "loglevel": "notice"
+                }
+            }]
         },
-        "nginx": {
-            "dir": "/etc/nginx",
-            "log_dir": "/var/log/nginx",
-            "binary": "/usr/sbin/nginx",
-            "user": "www-data",
-            "init_style": "runit",
-            "pid": "/var/run/nginx.pid",
-            "worker_connections": "1024"
-      },
-    },
-    "ports": [{
-        "ssh": {
-            "node": -1,
-            "protocol": "udp",
-            "gst": 22,
-            "hst": 2222
+        "node_3": {
+            "run_list": [
+                "git",
+                "redis",
+                "tools",
+                "custom"
+            ],
+            "defaults": [{
+                "redis": {
+                    "bind": "127.0.0.1",
+                    "port": "6379",
+                    "config_path": "/etc/redis/redis.conf",
+                    "daemonize": "yes",
+                    "timeout": "300",
+                    "loglevel": "notice"
+                }
+            }]
         }
+    },
+    "ports": [
+    {
+        "nfo": "ssh",
+        "nod": -1,
+        "typ": "udp",
+        "gst": 22,
+        "hst": 2222
     }, {
-        "rdp": {
-            "node": 0,
-            "gst": 3389,
-            "hst": 3389
-        }        
+        "nfo": "rdp",
+        "nod": 0,
+        "gst": 3389,
+        "hst": 3389
     }, {
-        "web": {
-            "node": 0,
-            "gst": 80,
-            "hst": 8000
-        }        
+        "nfo": "rsync",
+        "nod": 0,
+        "gst": 873,
+        "hst": 873
     }, {
-        "remote": {
-            "node": 0,
-            "gst": 3000,
-            "hst": 3000
-        }        
+        "nfo": "mysql",
+        "nod": 0,
+        "gst": 3306,
+        "hst": 3306
     }, {
-        "ngrok": {
-            "node": 0,
-            "gst": 4040,
-            "hst": 4040
-        }        
+        "nfo": "postgres",
+        "nod": 0,
+        "gst": 5432,
+        "hst": 5432
     }, {
-        "Kibana": {
-            "node": 0,
-            "gst": 5601,
-            "hst": 5601
-        }        
+        "nfo": "mongodb",
+        "nod": 0,
+        "gst": 27017,
+        "hst": 27018
     }, {
-        "RabbitMQ1": {
-            "node": 0,
-            "gst": 5671,
-            "hst": 5671
-        }        
+        "nfo": "influxdb",
+        "nod": 0,
+        "gst": 8086,
+        "hst": 8086
     }, {
-        "RabbitMQ2": {
-            "node": 0,
-            "gst": 5672,
-            "hst": 5672
-        }        
+        "nfo": "docker_eng_1",
+        "nod": 0,
+        "gst": 2375,
+        "hst": 2375
     }, {
-        "RabbitMQ3": {
-            "node": 0,
-            "gst": 4369,
-            "hst": 4369
-        }        
+        "nfo": "docker_eng_2",
+        "nod": 0,
+        "gst": 2376,
+        "hst": 2376
     }, {
-        "RabbitMQMan": {
-            "node": 0,
-            "gst": 15672,
-            "hst": 15672
-        }        
+        "nfo": "web",
+        "nod": 0,
+        "gst": 80,
+        "hst": 8000
     }, {
-        "elastisearch1": {
-            "node": 0,
-            "gst": 9200,
-            "hst": 9200
-        }        
+        "nfo": "remote",
+        "nod": 0,
+        "gst": 3000,
+        "hst": 3000
     }, {
-        "elastisearch2": {
-            "node": 0,
-            "gst": 9300,
-            "hst": 9300
-        }        
+        "nfo": "ngrok",
+        "nod": 0,
+        "gst": 4040,
+        "hst": 4040
     }, {
-        "MongpDB": {
-            "node": 0,
-            "gst": 27017,
-            "hst": 27018
-        }        
+        "nfo": "memcached",
+        "nod": 0,
+        "gst": 11211,
+        "hst": 11211
     }, {
-        "Redis": {
-            "node": 0,
-            "gst": 6379,
-            "hst": 6380
-        }        
+        "nfo": "varnish",
+        "nod": 0,
+        "gst": 6081,
+        "hst": 6081
     }, {
-        "tcp1": {
-            "node": 0,
-            "gst": 55985,
-            "hst": 55985
-        }        
+        "nfo": "elastic_1",
+        "nod": 0,
+        "gst": 9200,
+        "hst": 9200
     }, {
-        "tcp2": {
-            "node": 0,
-            "gst": 55986,
-            "hst": 55986
-        }        
-    }]
+        "nfo": "elastic_2",
+        "nod": 0,
+        "gst": 9300,
+        "hst": 9300
+    }, {
+        "nfo": "kibana",
+        "nod": 0,
+        "gst": 5601,
+        "hst": 5601
+    }, {
+        "nfo": "beanstalk",
+        "nod": 0,
+        "gst": 8080,
+        "hst": 8080
+    }, {
+        "nfo": "rabbit_mq1",
+        "nod": 0,
+        "gst": 5671,
+        "hst": 5671
+    }, {
+        "nfo": "rabbit_mq2",
+        "nod": 0,
+        "gst": 5672,
+        "hst": 5672
+    }, {
+        "nfo": "rabbit_mq3",
+        "nod": 0,
+        "gst": 4369,
+        "hst": 4369
+    }, {
+        "nfo": "rabbit_mqman",
+        "nod": 0,
+        "gst": 15672,
+        "hst": 15672
+    }, {
+        "nfo": "redis",
+        "nod": 0,
+        "gst": 6379,
+        "hst": 6380
+    }
+    ]
 }

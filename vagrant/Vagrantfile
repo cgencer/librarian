@@ -7,6 +7,7 @@ NODE_COUNT = 3
 PORTS = Array({:a => "a", :b => "b"}) 
 # Get Chef json
 VAGRANT_JSON = JSON.parse(Pathname(__FILE__).dirname.join("vm-config.json").read)
+PORTS = VAGRANT_JSON["ports"]
 
 $userScript = <<SCRIPT
   cd /home/vagrant
@@ -31,9 +32,6 @@ server {
 	server_name localhost;
 
 	location / {
-		proxy_pass http://"node_#{i}";
-	}
-}
 EOS
 
 $bootScript = <<-SHELL
@@ -82,37 +80,26 @@ Vagrant.configure("2") do |config|
 	  subsystem.ssh.private_key_path = ["~/.vagrant.d/insecure_private_key"]
 	  subsystem.ssh.insert_key = false
 
-node[:Production][:ApplicationLayer][:DockerTag]
+		#node[:Production][:ApplicationLayer][:DockerTag]
 
-
-	  subsystem.vm.network :forwarded_port, guest: 22, host: 2222, id: "ssh", auto_correct: true
-	  subsystem.vm.network :forwarded_port, guest: 3389, host: 3389, id: "rdp", auto_correct: true
-
-	#  config.vm.network :forwarded_port, guest: 80, host: 8080, id: "Web"
-	  subsystem.vm.network :forwarded_port, guest: 3000, host: 3000, id: "Remote"
-	  subsystem.vm.network :forwarded_port, guest: 4040, host: 4040, id: "ngrok"
-	  subsystem.vm.network :forwarded_port, guest: 5601, host: 5601, id: "Kibana"
-
-	  subsystem.vm.network :forwarded_port, guest: 5671, host: 5671, id: "RabbitMQ1"
-	  subsystem.vm.network :forwarded_port, guest: 5672, host: 5672, id: "RabbitMQ2"
-	  subsystem.vm.network :forwarded_port, guest: 4369, host: 4369, id: "RabbitMQ3"
-	  subsystem.vm.network :forwarded_port, guest: 15672, host: 15672, id: "RabbitMQMan"
-
-	  subsystem.vm.network :forwarded_port, guest: 9200, host: 9200, id: "elastisearch1"
-	  subsystem.vm.network :forwarded_port, guest: 9300, host: 9300, id: "elastisearch2"
-
-	  subsystem.vm.network :forwarded_port, guest: 27017, host: 27018, id: "MongpDB"
-	  subsystem.vm.network :forwarded_port, guest: 6379, host: 6380, id: "Redis"
-	  subsystem.vm.network :forwarded_port, guest: 55985, host: 55985, id: "tcp1"
-	  subsystem.vm.network :forwarded_port, guest: 55986, host: 55986, id: "tcp2"
+	  PORTS.each do |item|
+	  	$nfo = item['nfo'].nil? ? item['nfo'] : 'tcp'
+	  	if item['nod'] == i || item['nod'] == '-1'
+			subsystem.vm.network :forwarded_port, 
+				guest: item['gst'], 
+				host: item['hst'], 
+				id: $nfo, 
+				auto_correct: true
+		end
+	  end
 
 	  subsystem.vm.synced_folder ".", "/vagrant", disabled: true
 	  subsystem.vm.synced_folder "../dist/", "/var/www/html", :nfs => { :mount_options => ["dmode=777","fmode=777"] }
 
 	  subsystem.vm.network "public_network", bridge: "#$DEF_IF", ip: "192.168.1.#{i+100}", auto_correct: true
 
-	  subsystem.vm.provision "shell", inline: "echo -e $1 > /etc/nginx/conf.d/nginx.conf", args: "$reverseProxy"
-	  subsystem.vm.provision "shell", inline: "$bootScript"
+	  subsystem.vm.provision "shell", inline: "echo -e $1 > /etc/nginx/conf.d/nginx.conf", args: "#{$reverseProxy} proxy_pass http://node_#{i};}}"
+	  subsystem.vm.provision "shell", inline: "#{$bootScript}"
 
 	  subsystem.vm.provision "chef_zero" do |chef|
 	  	chef.log_level = "warn"
@@ -128,7 +115,7 @@ node[:Production][:ApplicationLayer][:DockerTag]
 	    chef.add_role "api"
 	    chef.add_role "web"
 
-	    chef.run_list = VAGRANT_JSON.delete("run_list") if VAGRANT_JSON["packages"]["nodes_#{i}"]["run_list"]
+	    chef.run_list = VAGRANT_JSON["packages"]["nodes_0"]["run_list"]
 	    chef.json = VAGRANT_JSON
 	  end
 
