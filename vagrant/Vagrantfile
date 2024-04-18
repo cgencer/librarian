@@ -1,0 +1,149 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+$DEF_IF = `route -n get default | grep interface | awk '{print $2}'`
+
+BOX_IMAGE = "bento/ubuntu-16.04"
+NODE_COUNT = 3
+PORTS = Array({:a => "a", :b => "b"}) 
+# Get Chef json
+VAGRANT_JSON = JSON.parse(Pathname(__FILE__).dirname.join("vm-config.json").read)
+
+$userScript = <<SCRIPT
+  cd /home/vagrant
+  wget -qO- https://raw.github.com/creationix/nvm/master/install.sh | sh
+  # This enables NVM without a logout/login
+  export NVM_DIR="/home/vagrant/.nvm"
+  [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm
+  nvm install stable
+  # You can also install other stuff here
+  npm install -g bower create-react-app
+SCRIPT
+
+$reverseProxy = <<-EOS
+upstream backend {
+	server localhost:8080;
+}
+
+server {
+	listen 80 default_server;
+	listen [::]:80 default_server ipv6only=on;
+
+	server_name localhost;
+
+	location / {
+		proxy_pass http://"node_#{i}";
+	}
+}
+EOS
+
+$bootScript = <<-SHELL
+	systemctl stop postfix.service
+	systemctl disable postfix.service
+	yum update -y
+	yum install -y wget vim nano net-tools initscripts gcc make tar bind-utils nc git unzip sysstat tree
+SHELL
+
+Vagrant.configure("2") do |config|
+
+  if Vagrant.has_plugin?("vagrant-omnibus")
+	config.omnibus.chef_version = "latest"
+  end
+
+  if Vagrant.has_plugin?("vagrant-hostmanager")
+	config.hostmanager.enabled = true
+	config.hostmanager.manage_guest = true
+	config.hostmanager.manage_host = true
+	config.hostmanager.ignore_private_ip = false
+	config.hostmanager.include_offline = true
+	config.hostmanager.aliases = %w(
+	  intranet.dev
+	)
+  end
+
+  config.ssh.forward_agent = true
+
+  config.vm.box = "dfsi/multisitebase"
+  #config.vm.box_url = "file:///tmp/centos7"
+  config.vm.provider :virtualbox do |vb|
+    vb.name = "lin"
+    vb.customize ["modifyvm",:id,"--usb","on"]
+	vb.gui = false
+	vb.memory = "2048"
+  end
+
+  (1..NODE_COUNT).each do |i|
+    config.vm.define "node#{i}" do |subsystem|
+      subsystem.vm.box = BOX_IMAGE
+	  subsystem.vm.name = "node_#{i}"
+	  subsystem.vm.hostname = "lin"
+	  subsystem.hostmanager.aliases = %w(node_#{i}.localdomain node_#{i})
+
+	  subsystem.ssh.username = "vagrant"
+	  subsystem.ssh.private_key_path = ["~/.vagrant.d/insecure_private_key"]
+	  subsystem.ssh.insert_key = false
+
+node[:Production][:ApplicationLayer][:DockerTag]
+
+
+	  subsystem.vm.network :forwarded_port, guest: 22, host: 2222, id: "ssh", auto_correct: true
+	  subsystem.vm.network :forwarded_port, guest: 3389, host: 3389, id: "rdp", auto_correct: true
+
+	#  config.vm.network :forwarded_port, guest: 80, host: 8080, id: "Web"
+	  subsystem.vm.network :forwarded_port, guest: 3000, host: 3000, id: "Remote"
+	  subsystem.vm.network :forwarded_port, guest: 4040, host: 4040, id: "ngrok"
+	  subsystem.vm.network :forwarded_port, guest: 5601, host: 5601, id: "Kibana"
+
+	  subsystem.vm.network :forwarded_port, guest: 5671, host: 5671, id: "RabbitMQ1"
+	  subsystem.vm.network :forwarded_port, guest: 5672, host: 5672, id: "RabbitMQ2"
+	  subsystem.vm.network :forwarded_port, guest: 4369, host: 4369, id: "RabbitMQ3"
+	  subsystem.vm.network :forwarded_port, guest: 15672, host: 15672, id: "RabbitMQMan"
+
+	  subsystem.vm.network :forwarded_port, guest: 9200, host: 9200, id: "elastisearch1"
+	  subsystem.vm.network :forwarded_port, guest: 9300, host: 9300, id: "elastisearch2"
+
+	  subsystem.vm.network :forwarded_port, guest: 27017, host: 27018, id: "MongpDB"
+	  subsystem.vm.network :forwarded_port, guest: 6379, host: 6380, id: "Redis"
+	  subsystem.vm.network :forwarded_port, guest: 55985, host: 55985, id: "tcp1"
+	  subsystem.vm.network :forwarded_port, guest: 55986, host: 55986, id: "tcp2"
+
+	  subsystem.vm.synced_folder ".", "/vagrant", disabled: true
+	  subsystem.vm.synced_folder "../dist/", "/var/www/html", :nfs => { :mount_options => ["dmode=777","fmode=777"] }
+
+	  subsystem.vm.network "public_network", bridge: "#$DEF_IF", ip: "192.168.1.#{i+100}", auto_correct: true
+
+	  subsystem.vm.provision "shell", inline: "echo -e $1 > /etc/nginx/conf.d/nginx.conf", args: "$reverseProxy"
+	  subsystem.vm.provision "shell", inline: "$bootScript"
+
+	  subsystem.vm.provision "chef_zero" do |chef|
+	  	chef.log_level = "warn"
+	    chef.install = false
+
+	    chef.cookbooks_path = "../cookbooks"
+	    chef.data_bags_path = "../data-bags"
+	    chef.roles_path = "../roles"
+	    chef.environments_path = "../environments"
+	    chef.nodes_path = "../nodes"
+
+	    chef.environment = "dev"
+	    chef.add_role "api"
+	    chef.add_role "web"
+
+	    chef.run_list = VAGRANT_JSON.delete("run_list") if VAGRANT_JSON["packages"]["nodes_#{i}"]["run_list"]
+	    chef.json = VAGRANT_JSON
+	  end
+
+	  subsystem.vm.provision "shell", inline: $userScript, privileged: false
+	  subsystem.vm.provision "postchef", after: "chef", type: "shell", inline:<<-SHELL
+	    echo 'chef installations completed.'
+	  SHELL
+
+    end
+  end
+
+  config.trigger.before :up do |t|
+    t.info = "Bringing up your Vagrant guest machine!"
+    t.run = {inline: "bash -c 'echo \"hey there!!\" > file.txt'"}
+  end
+
+
+end

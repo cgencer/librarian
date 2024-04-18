@@ -1,0 +1,7 @@
+{
+    "environment": "dev",
+    "jwt_secret": "YOURSECRETKEYGOESHERE",
+    "port": 3000,
+    "db_url": "",
+    "db_uri": "postgres://[user]:[pass]@[url]/[database]",
+  }

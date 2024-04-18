@@ -1,0 +1,32 @@
+{
+	"contentSecurities": {
+		"defaultSrc": "'self'",
+		"connectSrc": "'self'",
+	    "scriptSrc": [
+			"'self'", 
+			"'unsafe-inline'", 
+			"'unsafe-eval'", 
+			"ajax.googleapis.com", 
+			"www.google-analytics.com",
+			"maps.googleapis.com"
+		],
+		"styleSrc": [
+			"'self'",
+			"'unsafe-inline'",
+			"fonts.googleapis.com",
+			"ajax.googleapis.com"
+		],
+		"imgSrc": [
+			"maps.gstatic.com",
+			"*.googleapis.com",
+			"*.ggpht.com"
+		],
+		"fontSrc": [
+			"'self'",
+			"fonts.gstatic.com"
+		]
+	},
+	"referrers": [
+		"no-referrer"
+	]
+}

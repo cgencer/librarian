@@ -1,0 +1,11 @@
+{
+	"name": "api",
+	"default_attributes": {
+	},
+	"json_class": "Chef::Role",
+    "description": "Books API",
+    "chef_type": "role",
+	"run_list": [ 
+		"recipe[sample::api]"
+	]
+}

@@ -1,0 +1,91 @@
+/* Typography */
+
+@import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,400;1,900&display=swap');
+
+h1, h2, h3{
+	font-family: 'Lato', serif;
+	font-weight: 900;
+}
+
+h1{
+	font-size: 24px;
+}
+
+h2{
+	font-size: 20px;
+}
+
+h3{
+	font-size: 16px;
+}
+
+body{
+	font-family: 'Lato', serif;
+	font-weight: 400;
+	font-size: 20px;
+}
+
+/* Colors */
+
+body{
+	background-color: #5D96AD;
+	color: white;
+}
+
+.board li{
+	background-color: #5D96AD;
+	border-color: white !important;
+}
+
+.board li:hover{
+	color: #548495;
+	background-color: white;
+}
+
+.board a{
+	color: white;
+}
+
+.board a:hover, 
+.board a:active,
+.board li:hover a{
+	color: #548495;
+}
+
+
+/* Layout */
+
+body{
+	padding-left: 3%;
+}
+
+.board{
+	display: grid;
+	column-gap: 30px;
+	justify-items: center;
+}
+
+/* Display long board titles without extending first grid column. Will display at least 6 columns */
+.board h1{
+	grid-column: 1/6;
+	justify-self: left;
+	padding-left: 5%;
+}
+
+.board h2{
+	grid-row: 2;
+}
+
+.board ul{
+	grid-row: 3;
+	padding-left: 0;
+}
+
+.board li{
+	display: block;
+	border: 1px solid;
+	padding: 15px;
+	margin-bottom: 30px;
+	text-align: center;
+	border-radius: 25px;
+}

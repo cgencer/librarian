@@ -1,0 +1,3 @@
+//TODO: Feature: childs of ContentController & Routes for Post, Product, Game, ...
+//TODO: Feature: Generic Properties for the Content types
+//TODO: GraphQL beside RestAPI

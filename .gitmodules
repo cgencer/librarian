@@ -1,0 +1,60 @@
+[submodule "vagrant/chef/cookbooks/elasticsearch"]
+	path = vagrant/chef/cookbooks/elasticsearch
+	url = https://github.com/sous-chefs/elasticsearch
+[submodule "vagrant/chef/cookbooks/php"]
+	path = vagrant/chef/cookbooks/php
+	url = https://github.com/sous-chefs/php.git
+[submodule "vagrant/chef/cookbooks/nodejs"]
+	path = vagrant/chef/cookbooks/nodejs
+	url = https://github.com/sous-chefs/nodejs
+[submodule "vagrant/chef/cookbooks/memcached"]
+	path = vagrant/chef/cookbooks/memcached
+	url = https://github.com/sous-chefs/memcached
+[submodule "vagrant/chef/cookbooks/sc-mongodb"]
+	path = vagrant/chef/cookbooks/sc-mongodb
+	url = https://github.com/sous-chefs/sc-mongodb
+[submodule "vagrant/chef/cookbooks/varnish"]
+	path = vagrant/chef/cookbooks/varnish
+	url = https://github.com/sous-chefs/varnish
+[submodule "vagrant/chef/cookbooks/cron"]
+	path = vagrant/chef/cookbooks/cron
+	url = https://github.com/sous-chefs/cron
+[submodule "vagrant/chef/cookbooks/influxdb"]
+	path = vagrant/chef/cookbooks/influxdb
+	url = https://github.com/sous-chefs/influxdb
+[submodule "vagrant/chef/cookbooks/github"]
+	path = vagrant/chef/cookbooks/github
+	url = https://github.com/sous-chefs/github
+[submodule "vagrant/chef/cookbooks/postgresql"]
+	path = vagrant/chef/cookbooks/postgresql
+	url = https://github.com/sous-chefs/postgresql
+[submodule "vagrant/chef/cookbooks/golang"]
+	path = vagrant/chef/cookbooks/golang
+	url = https://github.com/sous-chefs/golang
+[submodule "vagrant/chef/cookbooks/docker-engine"]
+	path = vagrant/chef/cookbooks/docker-engine
+	url = https://github.com/sous-chefs/docker-engine
+[submodule "vagrant/chef/cookbooks/percona"]
+	path = vagrant/chef/cookbooks/percona
+	url = https://github.com/sous-chefs/percona
+[submodule "vagrant/chef/cookbooks/git"]
+	path = vagrant/chef/cookbooks/git
+	url = https://github.com/sous-chefs/git
+[submodule "vagrant/chef/cookbooks/nginx"]
+	path = vagrant/chef/cookbooks/nginx
+	url = https://github.com/sous-chefs/nginx
+[submodule "vagrant/chef/cookbooks/elixir"]
+	path = vagrant/chef/cookbooks/elixir
+	url = https://github.com/sous-chefs/elixir
+[submodule "vagrant/chef/cookbooks/firewall"]
+	path = vagrant/chef/cookbooks/firewall
+	url = https://github.com/sous-chefs/firewall
+[submodule "vagrant/chef/cookbooks/mariadb"]
+	path = vagrant/chef/cookbooks/mariadb
+	url = https://github.com/sous-chefs/mariadb
+[submodule "vagrant/chef/cookbooks/erlang"]
+	path = vagrant/chef/cookbooks/erlang
+	url = https://github.com/sous-chefs/erlang
+[submodule "vagrant/chef/cookbooks/rsync"]
+	path = vagrant/chef/cookbooks/rsync
+	url = https://github.com/sous-chefs/rsync
