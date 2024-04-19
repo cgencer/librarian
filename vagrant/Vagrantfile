@@ -2,12 +2,17 @@
 # vi: set ft=ruby :
 $DEF_IF = `route -n get default | grep interface | awk '{print $2}'`
 
-BOX_IMAGE = "bento/ubuntu-16.04"
-NODE_COUNT = 3
+BOX_IMAGE = "minimal/centos7"
+NODE_COUNT = 4
 PORTS = Array({:a => "a", :b => "b"}) 
 # Get Chef json
 VAGRANT_JSON = JSON.parse(Pathname(__FILE__).dirname.join("vm-config.json").read)
 PORTS = VAGRANT_JSON["ports"]
+
+RL_0 = VAGRANT_JSON['packages']['node_0']['run_list']
+RL_1 = VAGRANT_JSON['packages']['node_1']['run_list']
+RL_2 = VAGRANT_JSON['packages']['node_2']['run_list']
+RL_3 = VAGRANT_JSON['packages']['node_3']['run_list']
 
 $userScript = <<SCRIPT
   cd /home/vagrant
@@ -43,6 +48,15 @@ SHELL
 
 Vagrant.configure("2") do |config|
 
+  config.trigger.after :up do |t|
+    t.info = "Bringing up your Vagrant guest machine!"
+    t.run = {inline: "vagrant vbguest --do install"}
+  end
+
+  if Vagrant.has_plugin?("vagrant-vbguest")
+    config.vbguest.installer_options = { allow_kernel_upgrade: true }
+  end
+
   if Vagrant.has_plugin?("vagrant-omnibus")
 	config.omnibus.chef_version = "latest"
   end
@@ -60,21 +74,12 @@ Vagrant.configure("2") do |config|
 
   config.ssh.forward_agent = true
 
-  config.vm.box = "dfsi/multisitebase"
-  #config.vm.box_url = "file:///tmp/centos7"
-  config.vm.provider :virtualbox do |vb|
-    vb.name = "lin"
-    vb.customize ["modifyvm",:id,"--usb","on"]
-	vb.gui = false
-	vb.memory = "2048"
-  end
-
   (1..NODE_COUNT).each do |i|
     config.vm.define "node#{i}" do |subsystem|
       subsystem.vm.box = BOX_IMAGE
-	  subsystem.vm.name = "node_#{i}"
-	  subsystem.vm.hostname = "lin"
-	  subsystem.hostmanager.aliases = %w(node_#{i}.localdomain node_#{i})
+#	  subsystem.vm.hostname = "lin_#{i}.dev"
+
+#	  subsystem.hostmanager.aliases = %w(node_#{i}.localdomain node_#{i})
 
 	  subsystem.ssh.username = "vagrant"
 	  subsystem.ssh.private_key_path = ["~/.vagrant.d/insecure_private_key"]
@@ -93,29 +98,37 @@ Vagrant.configure("2") do |config|
 		end
 	  end
 
+	  subsystem.vm.provider :vbox do |vbox, override|
+		vbox.gui = false
+        vbox.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+        vbox.customize ["modifyvm", :id, "--memory", 512]
+        override.vm.box = 'CentOS 7 x64 Server'
+        # override.vm.box_url = 'http://goo.gl/wxdwM'
+      end
+
 	  subsystem.vm.synced_folder ".", "/vagrant", disabled: true
-	  subsystem.vm.synced_folder "../dist/", "/var/www/html", :nfs => { :mount_options => ["dmode=777","fmode=777"] }
+	  subsystem.vm.synced_folder "../dist/", "/var/www/html"
 
 	  subsystem.vm.network "public_network", bridge: "#$DEF_IF", ip: "192.168.1.#{i+100}", auto_correct: true
 
-	  subsystem.vm.provision "shell", inline: "echo -e $1 > /etc/nginx/conf.d/nginx.conf", args: "#{$reverseProxy} proxy_pass http://node_#{i};}}"
+#	  subsystem.vm.provision "shell", inline: "echo -e $1 > /etc/nginx/conf.d/nginx.conf", args: "#{$reverseProxy} proxy_pass http://node_#{i};}}"
 	  subsystem.vm.provision "shell", inline: "#{$bootScript}"
 
 	  subsystem.vm.provision "chef_zero" do |chef|
 	  	chef.log_level = "warn"
 	    chef.install = false
 
-	    chef.cookbooks_path = "../cookbooks"
-	    chef.data_bags_path = "../data-bags"
-	    chef.roles_path = "../roles"
-	    chef.environments_path = "../environments"
-	    chef.nodes_path = "../nodes"
+	    chef.cookbooks_path = "./chef/cookbooks"
+	    chef.data_bags_path = "./chef/data-bags"
+	    chef.roles_path = "./chef/roles"
+	    chef.environments_path = "./chef/environments"
+	    chef.nodes_path = "./chef/nodes"
 
 	    chef.environment = "dev"
 	    chef.add_role "api"
 	    chef.add_role "web"
 
-	    chef.run_list = VAGRANT_JSON["packages"]["nodes_0"]["run_list"]
+	    chef.run_list = RL_0
 	    chef.json = VAGRANT_JSON
 	  end
 
