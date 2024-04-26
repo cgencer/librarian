@@ -6,6 +6,7 @@
     "description": "Web application",
     "chef_type": "role",
 	"run_list": [ 
+		"recipe[micro-nodes::ssh_keys]",
 		"recipe[sample::web]"
 	]
 }

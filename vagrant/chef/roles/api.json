@@ -5,7 +5,8 @@
 	"json_class": "Chef::Role",
     "description": "Books API",
     "chef_type": "role",
-	"run_list": [ 
+	"run_list": [
+		"recipe[micro-nodes::ssh_keys]",
 		"recipe[sample::api]"
 	]
 }

@@ -1,8 +1,8 @@
 #
-# Cookbook Name:: build-essential
+# Cookbook:: build-essential
 # Recipe:: default
 #
-# Copyright 2008-2009, Opscode, Inc.
+# Copyright:: 2008-2018, Chef Software, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,29 +17,8 @@
 # limitations under the License.
 #
 
-case node['platform']
-when "ubuntu","debian"
-  %w{build-essential binutils-doc}.each do |pkg|
-    package pkg do
-      action :install
-    end
-  end
-when "centos","redhat","fedora"
-  %w{gcc gcc-c++ kernel-devel make}.each do |pkg|
-    package pkg do
-      action :install
-    end
-  end
-end
-
-package "autoconf" do
-  action :install
-end
-
-package "flex" do
-  action :install
-end
-
-package "bison" do
-  action :install
+# Call the build-essential custom resource
+# This can also be called directly in your cookbooks anywhere you want
+build_essential 'install_packages' do
+  compile_time node['build-essential']['compile_time']
 end

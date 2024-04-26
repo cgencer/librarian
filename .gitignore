@@ -89,7 +89,8 @@ dest/config/app-prod.json
 # Vagrant box directories
 vagrant/ngrok.config
 .vagrant/
-
+*.box
+.vagrant
 
 curl_trace.txt
 .env*

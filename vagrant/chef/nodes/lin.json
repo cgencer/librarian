@@ -1,8 +1,0 @@
-{
-  "name": "lin",
-  "hostname": "",
-  "run_list": [ 
-		"role[api]",
-		"role[web]"
-	]
-}

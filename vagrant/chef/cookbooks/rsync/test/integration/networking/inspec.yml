@@ -1,6 +1,0 @@
----
-name: rsync-networking-integration-tests
-title: Integration tests for rsync cookbook
-summary: This InSpec profile contains integration tests for rsync cookbook
-supports:
-  - os-family: linux

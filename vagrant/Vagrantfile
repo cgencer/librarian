@@ -38,6 +38,7 @@ EOS
 
 $bootScript = <<-SHELL
 	systemctl stop postfix.service
+	systemctl daemon-reload
 	systemctl disable postfix.service
 	yum update -y
 	yum install -y wget vim nano net-tools initscripts gcc make tar bind-utils nc git unzip sysstat tree
@@ -56,15 +57,10 @@ Vagrant.configure("2") do |config|
 
        # and lets specifically use the apt cache (note, this is a Debian-ism)
        config.cache.enable :yum
-       config.cache.enable :apt
        config.cache.enable :bower
        config.cache.enable :composer
        config.cache.enable :npm
        config.cache.enable :gem
-  end
-
-  if Vagrant.has_plugin?("vagrant-vbguest")
-    config.vbguest.installer_options = { allow_kernel_upgrade: true }
   end
 
   if Vagrant.has_plugin?("vagrant-omnibus")
@@ -85,6 +81,31 @@ Vagrant.configure("2") do |config|
   (1..NODE_COUNT).each do |machineNo|
     config.vm.define "node#{machineNo}" do |subsystem|
       subsystem.vm.box = BOX_IMAGE
+#	  if Vagrant.has_plugin?("vagrant-vbguest")
+#    	subsystem.vbguest.installer_options = { 
+#    	  allow_kernel_upgrade: true
+#	    }
+#  	  end
+
+	  config.vm.define "my_cent_os_box" do |c|
+		c.vbguest.installer_hooks[:before_install] = ["yum install -y epel-release", "sleep 1"]
+	  end
+
+	  subsystem.vm.provider :virtualbox do |vbox, override|
+		vbox.gui = false
+        vbox.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+        vbox.customize ["modifyvm", :id, "--memory", 512]
+        vbox.customize ["modifyvm", :id, "--cableconnected1", "on"]
+#        override.vm.box = 'CentOS 7 x64 Server'
+        # override.vm.box_url = 'http://goo.gl/wxdwM'
+      end
+
+	  subsystem.vm.synced_folder "#{PATH_VAGRANT}", "/vagrant"
+	  subsystem.vm.synced_folder "#{PATH_VAGRANT}/config", "/config"
+	  subsystem.vm.synced_folder "../dist/", "/var/www/html"
+
+	  subsystem.vm.network "public_network", bridge: "#$DEF_IF: Wi-Fi (AirPort)", ip: "192.168.1.#{machineNo+100}", auto_correct: true
+
 #	  subsystem.vm.hostname = "lin_#{i}.dev"
 
 #	  subsystem.hostmanager.aliases = %w(node_#{i}.localdomain node_#{i})
@@ -109,22 +130,9 @@ Vagrant.configure("2") do |config|
 			#subsystem.vm.provision "shell", inline: 'echo -e "\n" >> /vagrant/ip_tables.rules', privileged: true
 		end
 	  end
-	  subsystem.vm.provision "shell", inline: 'iptables -S', privileged: true
 
-	  subsystem.vm.provider :virtualbox do |vbox, override|
-		vbox.gui = false
-        vbox.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
-        vbox.customize ["modifyvm", :id, "--memory", 512]
-        vbox.customize ["modifyvm", :id, "--cableconnected1", "on"]
-#        override.vm.box = 'CentOS 7 x64 Server'
-        # override.vm.box_url = 'http://goo.gl/wxdwM'
-      end
+	  subsystem.vm.provision "shell", inline: 'sudo iptables -S', privileged: true
 
-	  subsystem.vm.synced_folder "#{PATH_VAGRANT}", "/vagrant"
-	  subsystem.vm.synced_folder "#{PATH_VAGRANT}/config", "/config"
-	  subsystem.vm.synced_folder "../dist/", "/var/www/html"
-
-	  subsystem.vm.network "public_network", bridge: "#$DEF_IF: Wi-Fi (AirPort)", ip: "192.168.1.#{machineNo+100}", auto_correct: true
 
 #	  subsystem.vm.provision "shell", inline: "echo -e $1 > /etc/nginx/conf.d/nginx.conf", args: "#{$reverseProxy} proxy_pass http://node_#{i};}}"
 	  subsystem.vm.provision "shell", inline: "#{$bootScript}"
@@ -132,6 +140,7 @@ Vagrant.configure("2") do |config|
 	  subsystem.vm.provision "chef_zero" do |chef|
 	  	chef.log_level = "warn"
 	    chef.install = false
+		chef.arguments = "--chef-license accept -l debug -E lin --force-logger" # -j ./vm-config.json"
 
 	    chef.cookbooks_path = "./chef/cookbooks"
 	    chef.data_bags_path = "./chef/data-bags"
@@ -148,14 +157,9 @@ Vagrant.configure("2") do |config|
 	  end
 
 	  subsystem.vm.provision "shell", inline: $userScript, privileged: false
-	  subsystem.vm.provision "prechef", before: "chef", type: "shell", inline:<<-PRESHELL
-		sudo iptables-restore < /vagrant/iptables.template
-	  PRESHELL
-	  subsystem.vm.provision "postchef", after: "chef", type: "shell", inline:<<-POSTSHELL
-	    echo 'chef installations completed.'
-		sudo iptables-restore < /vagrant/ip_tables.rules
+	  subsystem.vm.provision "prechef", after: "chef", type: "shell", inline:<<-POSTSHELL
+		sudo iptables-restore < /config/iptables.rules
 	  POSTSHELL
-
 
     end
   end
@@ -164,6 +168,5 @@ Vagrant.configure("2") do |config|
     t.info = "Bringing up your Vagrant guest machine!"
     t.run = {inline: "bash -c 'echo \"hey there!!\" > file.txt'"}
   end
-
 
 end

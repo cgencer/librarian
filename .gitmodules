@@ -3,7 +3,7 @@
 	url = https://github.com/sous-chefs/elasticsearch
 [submodule "vagrant/chef/cookbooks/php"]
 	path = vagrant/chef/cookbooks/php
-	url = https://github.com/sous-chefs/php.git
+	url = https://github.com/sous-chefs/php
 [submodule "vagrant/chef/cookbooks/nodejs"]
 	path = vagrant/chef/cookbooks/nodejs
 	url = https://github.com/sous-chefs/nodejs
@@ -58,3 +58,33 @@
 [submodule "vagrant/chef/cookbooks/rsync"]
 	path = vagrant/chef/cookbooks/rsync
 	url = https://github.com/sous-chefs/rsync
+[submodule "ffmpeg"]
+	path = ffmpeg
+	url = https://github.com/djoos-cookbooks/ffmpeg
+[submodule "vagrant/chef/cookbooks/ffmpeg"]
+	path = vagrant/chef/cookbooks/ffmpeg
+	url = https://github.com/djoos-cookbooks/ffmpeg
+[submodule "vagrant/chef/cookbooks/yum"]
+	path = vagrant/chef/cookbooks/yum
+	url = https://github.com/sous-chefs/yum.git
+[submodule "vagrant/chef/cookbooks/seven_zip"]
+	path = vagrant/chef/cookbooks/seven_zip
+	url = https://github.com/sous-chefs/seven_zip
+[submodule "vagrant/chef/cookbooks/se_linux"]
+	path = vagrant/chef/cookbooks/se_linux
+	url = https://github.com/sous-chefs/selinux
+[submodule "vagrant/chef/cookbooks/redisio"]
+	path = vagrant/chef/cookbooks/redisio
+	url = https://github.com/sous-chefs/redisio
+[submodule "vagrant/chef/cookbooks/imagemagick"]
+	path = vagrant/chef/cookbooks/imagemagick
+	url = https://github.com/wbotelhos/chef-imagemagick
+[submodule "vagrant/chef/cookbooks/apache2"]
+	path = vagrant/chef/cookbooks/apache2
+	url = https://github.com/sous-chefs/apache2
+[submodule "vagrant/chef/cookbooks/beanstalkd"]
+	path = vagrant/chef/cookbooks/beanstalkd
+	url = https://github.com/djoos-cookbooks/beanstalkd
+[submodule "vagrant/chef/cookbooks/chocolatey"]
+	path = vagrant/chef/cookbooks/chocolatey
+	url = https://github.com/chocolatey/chocolatey-cookbook

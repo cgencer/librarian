@@ -1,105 +1,38 @@
 {
+    "chef_environment": "dev",
     "packages": {
         "node_0": {
             "description": "This one is the main access point, holding our nginx reverse proxy / web server",
             "run_list": [
-                "git",
-                "nginx",
-                "apache2",
+                "micro-essentials",
                 "tools",
-                "custom"
-            ],
-            "defaults": [{
-                "nginx": {
-                    "dir": "/etc/nginx",
-                    "log_dir": "/var/log/nginx",
-                    "binary": "/usr/sbin/nginx",
-                    "user": "www-data",
-                    "init_style": "runit",
-                    "pid": "/var/run/nginx.pid",
-                    "worker_connections": "1024"
-                }
-            }]
+                "nginx",
+                "apache2"
+            ]
         },
         "node_1": {
             "run_list": [
-                "git",
-                "nodejs",
-                "postgres",
+                "micro-essentials",
                 "tools",
-                "custom"
-            ],
-            "defaults": [{
-                "git_user": {
-                    "email": "email",
-                    "username": "username",
-                    "private_key": "privateKey"
-                },
-                "postgresql": {
-                    "config": {
-                        "listen_addresses": "*",
-                        "port": "5432"
-                    },
-                    "pg_hba": [{
-                        "type": "local",
-                        "db": "postgres",
-                        "user": "postgres",
-                        "addr": "nil",
-                        "method": "trust"
-                    }, {
-                        "type": "host",
-                        "db": "all",
-                        "user": "all",
-                        "addr": "0.0.0.0/0",
-                        "method": "md5"
-                    }, {
-                        "type": "host",
-                        "db": "all",
-                        "user": "all",
-                        "addr": "::1/0",
-                        "method": "md5"
-                    }],
-                    "password": {
-                        "postgres": "super_secret"
-                    }
-                }
-            }]
+                "nodejs",
+                "postgresql",
+                "mariadb",
+                "sc-mongodb"
+            ]
         },
         "node_2": {
             "run_list": [
-                "git",
-                "redis",
+                "micro-essentials",
                 "tools",
-                "custom"
-            ],
-            "defaults": [{
-                "redis": {
-                    "bind": "127.0.0.1",
-                    "port": "6379",
-                    "config_path": "/etc/redis/redis.conf",
-                    "daemonize": "yes",
-                    "timeout": "300",
-                    "loglevel": "notice"
-                }
-            }]
+                "redis"
+            ]
         },
         "node_3": {
             "run_list": [
-                "git",
-                "redis",
+                "micro-essentials",
                 "tools",
-                "custom"
-            ],
-            "defaults": [{
-                "redis": {
-                    "bind": "127.0.0.1",
-                    "port": "6379",
-                    "config_path": "/etc/redis/redis.conf",
-                    "daemonize": "yes",
-                    "timeout": "300",
-                    "loglevel": "notice"
-                }
-            }]
+                "redis"
+            ]
         }
     },
     "ports": [
