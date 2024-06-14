@@ -88,3 +88,24 @@
 [submodule "vagrant/chef/cookbooks/chocolatey"]
 	path = vagrant/chef/cookbooks/chocolatey
 	url = https://github.com/chocolatey/chocolatey-cookbook
+[submodule "vagrant/chef/cookbooks/nano"]
+	path = vagrant/chef/cookbooks/nano
+	url = https://github.com/sous-chefs/nano
+[submodule "vagrant/chef/cookbooks/ntp"]
+	path = vagrant/chef/cookbooks/ntp
+	url = https://github.com/sous-chefs/ntp
+[submodule "vagrant/chef/cookbooks/nvm"]
+	path = vagrant/chef/cookbooks/nvm
+	url = https://github.com/phutchins/nvm
+[submodule "vagrant/chef/cookbooks/yum-epel"]
+	path = vagrant/chef/cookbooks/yum-epel
+	url = https://github.com/sous-chefs/yum-epel
+[submodule "vagrant/chef/cookbooks/chef-oh_my_zsh"]
+	path = vagrant/chef/cookbooks/chef-oh_my_zsh
+	url = https://github.com/EugenMayer/chef-oh_my_zsh
+[submodule "nextjs-react"]
+	path = nextjs-react
+	url = https://github.com/cgencer/librarian-clients-react.git
+[submodule "nextjs-auth"]
+	path = nextjs-auth
+	url = https://github.com/cgencer/librarian-clients-auth

@@ -1,8 +1,0 @@
-{
-  "name": "vagrant-a4e9e452",
-  "chef_environment": "dev",
-  "run_list": [ 
-		"role[api]",
-		"role[web]"
-	]
-}
