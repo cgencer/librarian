@@ -1,0 +1,11 @@
+{
+	"name": "mono_client",
+	"default_attributes": {
+	},
+	"json_class": "Chef::Role",
+    "description": "Monolith server application",
+    "chef_type": "role",
+	"run_list": [ 
+		"recipe[micro-nodes]"
+	]
+}

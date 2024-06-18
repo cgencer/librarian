@@ -1,0 +1,82 @@
+---
+driver:
+  name: vagrant
+
+provisioner:
+  name: chef_infra
+  product_name: chef
+  deprecations_as_errors: true
+  enforce_idempotency: true
+  multiple_converge: 2
+  chef_license: accept-no-persist
+  attributes:
+    varnish:
+      backend_host: '127.0.0.10'
+
+verifier:
+  name: inspec
+
+platforms:
+  - name: almalinux-8
+  # - name: amazonlinux-2
+  - name: debian-10
+  - name: debian-11
+  - name: centos-7
+  - name: centos-stream-8
+  - name: fedora-latest
+  - name: ubuntu-18.04
+  - name: ubuntu-20.04
+  - name: rockylinux-8
+  # - name: opensuse-leap-15
+
+suites:
+  - name: varnish66
+    run_list:
+      - recipe[install_varnish::vendor_install]
+    attributes:
+      varnish:
+        major_version: 6.6
+    verifier:
+      inspec_tests:
+        - path: test/integration/varnish
+      inputs:
+        version: 6.6
+    excludes:
+      - debian-11
+  - name: varnish70
+    run_list:
+      - recipe[install_varnish::vendor_install]
+    attributes:
+      varnish:
+        major_version: 7.0
+    verifier:
+      inspec_tests:
+        - path: test/integration/varnish
+      inputs:
+        version: 7.0
+  - name: distro
+    run_list:
+      - recipe[install_varnish::distro_install]
+    attributes:
+      varnish:
+        configure:
+          repo:
+            action: :nothing
+    verifier:
+      inspec_tests:
+        - path: test/integration/varnish
+      inputs:
+        ncsa_format_string: true
+  - name: full_stack
+    run_list:
+      - recipe[install_varnish::full_stack]
+    attributes:
+      varnish:
+        configure:
+          repo:
+            action: :nothing
+    verifier:
+      inspec_tests:
+        - path: test/integration/varnish
+      inputs:
+        full_stack: true

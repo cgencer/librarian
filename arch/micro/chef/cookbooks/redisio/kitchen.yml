@@ -1,0 +1,83 @@
+---
+driver:
+  name: vagrant
+
+provisioner:
+  name: chef_infra
+  product_name: chef
+  product_version: <%= ENV['CHEF_VERSION'] || 'latest' %>
+  chef_license: accept-no-persist
+  multiple_converge: 2
+  enforce_idempotency: true
+  deprecations_as_errors: true
+
+verifier:
+  name: inspec
+
+platforms:
+  - name: almalinux-8
+  - name: debian-10
+  - name: debian-11
+  - name: freebsd-10
+  - name: freebsd-11
+  - name: rockylinux-8
+  - name: ubuntu-18.04
+  - name: ubuntu-20.04
+  - name: ubuntu-22.04
+
+suites:
+  - name: default
+    run_list:
+      - recipe[redisio::default]
+      - recipe[redisio::enable]
+    attributes:
+      redisio:
+        version: "<%= ENV['REDIS_VERSION'] || '6.2.3' %>"
+        servers:
+          - port: 6379
+          - port: 16379
+            permissions: '0640'
+            name: 'savetest'
+            save: "3600 1\n300 100\n60 10000"
+            logfile: '/var/log/redis/redis-16379.log'
+
+  - name: sentinel
+    run_list:
+      - recipe[redisio::default]
+      - recipe[redisio::enable]
+      - recipe[redisio::sentinel]
+      - recipe[redisio::sentinel_enable]
+    attributes:
+      redisio:
+        version: "<%= ENV['REDIS_VERSION'] || '6.2.3' %>"
+        servers:
+          - port: 6379
+
+  - name: multisentinel
+    run_list:
+      - recipe[redisio::default]
+      - recipe[redisio::enable]
+      - recipe[redisio::sentinel]
+      - recipe[redisio::sentinel_enable]
+    attributes:
+      redisio:
+        version: "<%= ENV['REDIS_VERSION'] || '6.2.3' %>"
+        servers:
+          - port: 6379
+          - port: 6380
+        sentinels:
+          -
+            name: 'cluster'
+            sentinel_bind: 0.0.0.0
+            sentinel_port: 26379
+            masters:
+              -
+                name: 'sentinel6379'
+                master_name: 'master6379'
+                master_ip: '127.0.0.1'
+                master_port: 6379
+              -
+                name: 'sentinel6380'
+                master_name: 'master6380'
+                master_ip: '127.0.0.1'
+                master_port: 6380

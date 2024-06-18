@@ -1,0 +1,8 @@
+{
+  "id"        : "testman",
+  "comment"   : "Test Man",
+  "home"      : "/home/testman",
+  "groups"    : ["testman", "wheel"],
+  "shell"     : "/bin/zsh",
+  "oh-my-zsh" : { "enabled": true, "theme": "wedisagree" }
+}

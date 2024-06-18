@@ -1,0 +1,34 @@
+# use chef-current-xyz to install the pre-release
+addons:
+  apt:
+    sources:
+      - chef-stable-focal
+    packages:
+      - chef-workstation
+
+env:
+  - CHEF_LICENSE=accept
+
+services: docker
+
+# https://docs.travis-ci.com/user/customizing-the-build/#Skipping-the-Installation-Step
+install: true
+
+before_script:
+  - eval "$(/opt/chef-workstation/bin/chef shell-init bash)" # make Chef Workstation's Ruby the default
+  - chef --version
+  - chef exec berks install
+
+script:
+  - chef exec rake travis
+
+branches:
+  only:
+    - master
+    - /^release\/.*$/
+    - /^feature\/.*$/
+    - /^bugfix\/.*$/
+
+notifications:
+  email:
+    - development@davidjoos.com

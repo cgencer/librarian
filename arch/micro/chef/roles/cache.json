@@ -1,0 +1,11 @@
+{
+	"name": "cache",
+	"default_attributes": {
+	},
+	"json_class": "Chef::Role",
+    "description": "Cache",
+    "chef_type": "role",
+	"run_list": [
+		"recipe[micro-nodes]"
+	]
+}

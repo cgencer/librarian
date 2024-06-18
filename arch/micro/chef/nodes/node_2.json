@@ -1,0 +1,9 @@
+{
+  "name": "node_2",
+  "hostname": "",
+  "run_list": [ 
+    "micro-essentials",
+    "nodejs",
+    "micro-nodes"
+	]
+}

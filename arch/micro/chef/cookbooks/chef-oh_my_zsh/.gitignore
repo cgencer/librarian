@@ -1,0 +1,7 @@
+Gemfile.lock
+Berksfile.lock
+tmp/
+.kitchen/
+.kitchen.local.yml
+.idea/workspace.xml
+cookbooks/**

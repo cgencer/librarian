@@ -1,0 +1,152 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+$DEF_IF = `route -n get default | grep interface | awk '{print $2}'`
+$DEF_IF = $DEF_IF.strip
+
+BOX_IMAGE = "minimal/centos7"
+# Get Chef json
+VAGRANT_JSON = JSON.parse(Pathname(__FILE__).dirname.join("vm-config.json").read, { symbolize_names: true })
+PATH_VAGRANT = Pathname(__FILE__).dirname
+
+$nodeScript = <<SCRIPT
+  cd /home/vagrant
+  alias curl="curl -k --insecure"
+  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
+  export NVM_DIR="/home/vagrant/.nvm"
+  [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm
+  nvm install 16
+  nvm install 17
+  nvm install 18
+  nvm install 19
+  nvm install 20
+  nvm install stable
+  nvm use 16
+
+  curl -o- https://get.pnpm.io/install.sh | bash
+  mv install.sh install.sh.1
+  # replace 'curl -fsSL' with 'curl -k -fsSL'
+  sed 's/curl -fsSL/curl -k -fsSL/g' install.sh.1 >install.sh
+  sudo chmod +x install.sh
+  ./install.sh
+
+  npm install -g bower yarn pnpm create-react-app @vue/cli mocha
+SCRIPT
+
+$reverseProxy = <<-EOS
+upstream backend {
+	server localhost:8080;
+}
+
+server {
+	listen 80 default_server;
+	listen [::]:80 default_server ipv6only=on;
+
+	server_name localhost;
+
+	location / {
+	}
+}
+EOS
+
+$bootScript = <<-SHELL
+	systemctl stop postfix.service
+	systemctl daemon-reload
+	systemctl disable postfix.service
+SHELL
+
+Vagrant.configure("2") do |config|
+
+  if Vagrant.has_plugin?('vagrant-cachier')
+    config.cache.auto_detect = true
+    config.cache.scope = :box
+    config.cache.enable :yum
+    config.cache.enable :bower
+    config.cache.enable :composer
+    config.cache.enable :npm
+    config.cache.enable :gem
+  end
+
+  if Vagrant.has_plugin?("vagrant-omnibus")
+	config.omnibus.chef_version = "latest"
+  end
+
+  if Vagrant.has_plugin?("vagrant-hostmanager")
+	config.hostmanager.enabled = true
+	config.hostmanager.manage_guest = true
+	config.hostmanager.manage_host = true
+	config.hostmanager.ignore_private_ip = false
+	config.hostmanager.include_offline = true
+	config.hostmanager.aliases = %w(
+	  intranet.dev
+	)
+  end
+
+    config.vm.define "node" do |subsystem|
+      subsystem.vm.box = BOX_IMAGE
+
+	  if Vagrant.has_plugin?("vagrant-vbguest")
+		 subsystem.vbguest.installer_hooks[:before_install] = ["sudo yum update curl --disablerepo=epel", "sleep 1"]
+#        subsystem.vbguest.installer_hooks[:before_install] = ["sudo yum install -y yum-utils epel-release wget vim nano net-tools initscripts gcc make tar bind-utils nc git unzip sysstat tree httpd curl bower", "sleep 1"]
+      end
+
+	  subsystem.vm.provider :virtualbox do |vbox, override|
+		vbox.gui = false
+        vbox.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+        vbox.customize ["modifyvm", :id, "--memory", 512]
+        vbox.customize ["modifyvm", :id, "--cableconnected1", "on"]
+
+#        override.vm.box = 'CentOS 7 x64 Server'
+        # override.vm.box_url = 'http://goo.gl/wxdwM'
+      end
+
+	  subsystem.vm.synced_folder "#{PATH_VAGRANT}", "/vagrant"
+	  subsystem.vm.synced_folder "#{PATH_VAGRANT}/config", "/config"
+	  subsystem.vm.synced_folder "../../dist/", "/var/www/html"
+
+	  subsystem.vm.network "public_network", bridge: "#$DEF_IF: Wi-Fi (AirPort)", ip: "192.168.1.100", auto_correct: true
+
+	  puts "=====================: active ports on: #node"
+	  VAGRANT_JSON.dig(:ports).each do |item|
+	  	$typ = item.dig(:typ).nil? ? 'tcp' : item.dig(:typ)
+		onNode = item.dig(:nod).to_i
+#			puts "{#{item.dig(:nfo)}}"
+			subsystem.vm.network "forwarded_port", 
+				guest: item.dig(:gst).to_i, 
+				host: item.dig(:hst).to_i, 
+				protocol: $typ, 
+				id: $nfo, 
+				auto_correct: true
+	  end
+
+	  subsystem.vm.provision "shell", inline: $nodeScript, privileged: false
+
+	  subsystem.vm.provision "shell", inline: 'sudo iptables -S', privileged: true
+
+#	  subsystem.vm.provision "shell", inline: "#{$bootScript}"
+
+	  subsystem.vm.provision "chef_zero" do |chef|
+	  	chef.log_level = "warn"
+	    chef.install = false
+		chef.arguments = "--chef-license accept -l debug -E lin --force-logger" # -j ./vm-config.json"
+
+	    chef.cookbooks_path = "../_cookbooks"
+	    chef.data_bags_path = "./chef/data-bags"
+	    chef.roles_path = "./chef/roles"
+	    chef.environments_path = "./chef/environments"
+	    chef.nodes_path = "./chef/nodes"
+
+	    chef.environment = "dev"
+	    chef.add_role "server"
+	    chef.add_role "client"
+
+	    chef.run_list = VAGRANT_JSON.dig(:packages, :"basenode", :run_list)
+	    chef.json = VAGRANT_JSON
+	  end
+
+	  subsystem.vm.provision "prechef", after: "chef", type: "shell", inline:<<-POSTSHELL
+		sudo iptables-restore < /config/iptables.rules
+	  POSTSHELL
+
+    end
+
+end

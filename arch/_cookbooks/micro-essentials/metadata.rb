@@ -1,0 +1,10 @@
+# frozen_string_literal: true
+name 'micro-nodes'
+maintainer 'Cem Gencer'
+maintainer_email 'o.cem.gencer@gmail.com'
+license 'Apache-2.0'
+description 'Installs essential minor tools'
+version '0.1.0'
+depends 'yum'
+depends 'git'
+depends 'chef-imagemagick'

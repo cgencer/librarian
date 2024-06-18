@@ -1,0 +1,10 @@
+{
+  "name": "node_3",
+  "hostname": "",
+  "run_list": [ 
+    "micro-essentials",
+    "nodejs",
+    "redisio",
+    "role[que]"
+	]
+}

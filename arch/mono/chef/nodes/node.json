@@ -1,0 +1,12 @@
+{
+  "name": "mono_server",
+  "hostname": "",
+  "run_list": [ 
+    "micro-essentials",
+    "nodejs",
+    "nginx",
+    "apache2",
+		"role[api]",
+		"role[web]"
+	]
+}

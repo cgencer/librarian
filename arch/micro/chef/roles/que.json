@@ -1,0 +1,11 @@
+{
+	"name": "queue",
+	"default_attributes": {
+	},
+	"json_class": "Chef::Role",
+    "description": "Queue",
+    "chef_type": "role",
+	"run_list": [
+		"recipe[micro-nodes]"
+	]
+}

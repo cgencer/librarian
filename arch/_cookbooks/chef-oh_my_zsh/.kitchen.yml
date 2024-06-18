@@ -1,0 +1,39 @@
+---
+driver:
+  hostname: test # Hostname is used in the tests so should be fixed
+  name: dokken
+
+transport:
+  name: dokken
+
+provisioner:
+  name: dokken
+  # not working for now
+  # chef_omnibus_url: https://omnitruck.cinc.sh/install.sh
+  # chef_omnibus_root: /opt/cinc
+  # product_version: 17
+
+verifier:
+  name: inspec
+
+platforms:
+  - name: debian-11
+    driver:
+      image: dokken/debian-11
+      pid_one_command: /bin/systemd
+      privileged: true
+      intermediate_instructions:
+        # we want to ensure we also work when lsb-lease was not installed beforehand and we have to install it
+        # and populate ohai[lsb][codename] which we need for e.g. debian.rb apt sources
+        - RUN apt purge -y lsb-release
+        - RUN apt-get install -y openssh-client
+
+suites:
+  - name: default
+    run_list:
+      - recipe[oh_my_zsh_test::default]
+    attributes: {}
+  - name: powerlevel
+    run_list:
+      - recipe[oh_my_zsh_test::powerlevel]
+    attributes: {}

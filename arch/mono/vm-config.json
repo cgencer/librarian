@@ -1,0 +1,90 @@
+{
+    "chef_environment": "dev",
+    "packages": {
+        "server": {
+            "description": "This is the main server package including all server tools",
+            "run_list": [
+                "micro-essentials",
+                "nginx",
+                "apache2",
+                "nodejs",
+                "postgresql",
+                "mariadb",
+                "redis"
+            ]
+        },
+        "client": {
+            "description": "This is the main client",
+            "run_list": [
+                "micro-essentials",
+                "nginx",
+                "apache2",
+                "nodejs",
+            ]
+        }
+    },
+    "ports": [
+    {
+        "nfo": "ssh",
+        "nod": -1,
+        "typ": "udp",
+        "gst": 22,
+        "hst": 2222
+    }, {
+        "nfo": "rsync",
+        "nod": -1,
+        "gst": 873,
+        "hst": 873
+    }, {
+        "nfo": "mysql",
+        "nod": 1,
+        "gst": 3306,
+        "hst": 3306
+    }, {
+        "nfo": "postgres",
+        "nod": 1,
+        "gst": 5432,
+        "hst": 5432
+    }, {
+        "nfo": "mongodb",
+        "nod": 1,
+        "gst": 27017,
+        "hst": 27018
+    }, {
+        "nfo": "web",
+        "nod": -1,
+        "gst": 80,
+        "hst": 8000
+    }, {
+        "nfo": "remote",
+        "nod": 0,
+        "gst": 3000,
+        "hst": 3000
+    }, {
+        "nfo": "ngrok",
+        "nod": 0,
+        "gst": 4040,
+        "hst": 4040
+    }, {
+        "nfo": "memcached",
+        "nod": 2,
+        "gst": 11211,
+        "hst": 11211
+    }, {
+        "nfo": "elastic_1",
+        "nod": 1,
+        "gst": 9200,
+        "hst": 9200
+    }, {
+        "nfo": "elastic_2",
+        "nod": 1,
+        "gst": 9300,
+        "hst": 9300
+    }, {
+        "nfo": "redis",
+        "nod": 2,
+        "gst": 6379,
+        "hst": 6380
+    }
+    ]
+}
