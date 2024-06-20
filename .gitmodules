@@ -109,3 +109,6 @@
 [submodule "nextjs-auth"]
 	path = nextjs-auth
 	url = https://github.com/cgencer/librarian-clients-auth
+[submodule "arch/_cookbooks/apache2"]
+	path = arch/_cookbooks/apache2
+	url = https://github.com/sous-chefs/apache2.git

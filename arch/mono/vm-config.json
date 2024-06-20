@@ -18,8 +18,7 @@
             "run_list": [
                 "micro-essentials",
                 "nginx",
-                "apache2",
-                "nodejs",
+                "nodejs"
             ]
         }
     },
