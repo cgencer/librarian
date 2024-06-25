@@ -2,52 +2,49 @@
 # vi: set ft=ruby :
 $DEF_IF = `route -n get default | grep interface | awk '{print $2}'`
 $DEF_IF = $DEF_IF.strip
-
+MA_CUS = 0
+MB_CUS = 0
 BOX_IMAGE = "minimal/centos7"
 # Get Chef json
 VAGRANT_JSON = JSON.parse(Pathname(__FILE__).dirname.join("vm-config.json").read, { symbolize_names: true })
-PATH_VAGRANT = '../../' #Pathname(__FILE__).dirname
+PATH_VAGRANT = File.expand_path('../..')
 NODE_COUNT = 2
+
+$yumScript = <<SCRIPT
+	sudo yum update
+	sudo yum update kernel
+	sudo yum groupinstall "Development tools"
+	sudo yum install kernel-devel
+	sudo sed -i "s/metalink=https/metalink=http/" /etc/yum.repos.d/epel.repo
+	sudo sed -i "s/baseurl=https/baseurl=http/" /etc/yum.repos.d/epel.repo
+	sudo yum makecache fast
+	sudo yum -y upgrade ca-certificates
+	sudo yum install -y yum-utils epel-release wget vim nano net-tools initscripts gcc make tar bind-utils nc git unzip sysstat tree httpd curl bower
+SCRIPT
 
 $nodeScript = <<SCRIPT
   cd /home/vagrant
   alias curl="curl -k --insecure"
-  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
+  curl -k -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
   export NVM_DIR="/home/vagrant/.nvm"
   [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm
   nvm install 16
   nvm install 17
-  nvm install 18
-  nvm install 19
-  nvm install 20
+#  nvm install 18
+#  nvm install 19
+#  nvm install 20
   nvm install stable
   nvm use 16
 
-  curl -o- https://get.pnpm.io/install.sh | bash
+  curl -k -o- https://get.pnpm.io/install.sh | bash
   mv install.sh install.sh.1
   # replace 'curl -fsSL' with 'curl -k -fsSL'
-  sed 's/curl -fsSL/curl -k -fsSL/g' install.sh.1 >install.sh
+  sed 's/curl -fsSL/curl "-k -fsSL/g"' install.sh.1 >install.sh
   sudo chmod +x install.sh
   ./install.sh
 
   npm install -g bower yarn pnpm create-react-app @vue/cli mocha
 SCRIPT
-
-$reverseProxy = <<-EOS
-upstream backend {
-	server localhost:8080;
-}
-
-server {
-	listen 80 default_server;
-	listen [::]:80 default_server ipv6only=on;
-
-	server_name localhost;
-
-	location / {
-	}
-}
-EOS
 
 $bootScript = <<-SHELL
 	systemctl stop postfix.service
@@ -59,10 +56,10 @@ Vagrant.configure("2") do |config|
 
   if Vagrant.has_plugin?('vagrant-cachier')
     config.cache.auto_detect = true
-	config.cache.synced_folder_opts = {
-      type: :nfs,
-      mount_options: ['rw', 'vers=3', 'tcp', 'nolock']
-    }
+#	config.cache.synced_folder_opts = {
+#      type: :nfs,
+#      mount_options: ['rw', 'vers=3', 'tcp', 'nolock']
+#    }
     config.cache.scope = :box
     config.cache.enable :yum
     config.cache.enable :bower
@@ -86,38 +83,22 @@ Vagrant.configure("2") do |config|
 	)
   end
 
+
   (1..NODE_COUNT).each do |machineNo|
-    config.vm.define "node" do |subsystem|
+  	machineT = (machineNo == 1) ? "server" : "client"
+
+
+	puts "=====================: defining #{machineT}"
+    config.vm.define "node_#{machineNo}_#{machineT}" do |subsystem|
       subsystem.vm.box = BOX_IMAGE
-
-	  if Vagrant.has_plugin?("vagrant-vbguest")
-		 subsystem.vbguest.installer_hooks[:before_install] = ["sudo yum update curl --disablerepo=epel", "sleep 1"]
-#        subsystem.vbguest.installer_hooks[:before_install] = ["sudo yum install -y yum-utils epel-release wget vim nano net-tools initscripts gcc make tar bind-utils nc git unzip sysstat tree httpd curl bower", "sleep 1"]
+      subsystem.vm.provider :virtualbox do |vb|
+      	vb.name = "node_#{machineNo}"
       end
 
-	  subsystem.vm.provider :virtualbox do |vbox, override|
-		vbox.gui = false
-        vbox.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
-        vbox.customize ["modifyvm", :id, "--memory", 512]
-        vbox.customize ["modifyvm", :id, "--cableconnected1", "on"]
+	  puts "=====================: active ports on: #node: #{machineNo} on 192.168.56.#{machineNo+100}"
+	  subsystem.vm.network "private_network", bridge: "#$DEF_IF: Wi-Fi (AirPort)", ip: "192.168.56.#{machineNo+100}", auto_correct: true
+#      subsystem.vm.hostname = "#{machineT}"
 
-#        override.vm.box = 'CentOS 7 x64 Server'
-        # override.vm.box_url = 'http://goo.gl/wxdwM'
-      end
-
-
-      if (machineNo.to_i-1 == 0)
-		subsystem.vm.hostname = 'server'
-#	    subsystem.vm.synced_folder "../../dist", "/var/www/html"
-	  else
-		subsystem.vm.hostname = 'client'
-# 	    subsystem.vm.synced_folder "../../clients/nextjs-auth", "/var/www/html/auth"
-#	    subsystem.vm.synced_folder "../../clients/nextjs-react", "/var/www/html/react"
-	  end
-
-	  subsystem.vm.network "public_network", bridge: "#$DEF_IF: Wi-Fi (AirPort)", ip: "192.168.1.100", auto_correct: true
-
-	  puts "=====================: active ports on: #node: #{machineNo}"
 	  VAGRANT_JSON.dig(:ports).each do |item|
 	  	$typ = item.dig(:typ).nil? ? 'tcp' : item.dig(:typ)
 		onNode = item.dig(:nod).to_i
@@ -130,20 +111,43 @@ Vagrant.configure("2") do |config|
 				auto_correct: true
 	  end
 
-	  subsystem.vm.provision "shell", inline: $nodeScript, privileged: false
+      subsystem.vm.provision "shell", inline: $yumScript, privileged: false
 
+	  if Vagrant.has_plugin?("vagrant-vbguest")
+	  	 subsystem.vbguest.iso_path = "#{ENV['HOME']}/Downloads/VBoxGuestAdditions_6.0.0.iso"
+	  	 subsystem.vbguest.auto_update = true
+	  	 subsystem.vbguest.installer_hooks[:before_install] = ["sudo yum update -y && sudo yum update kernel -y && sudo yum -y groupinstall 'Development tools' && sudo yum install -y kernel-devel yum-utils epel-release wget nano net-tools", "sleep 1"]
+#		 subsystem.vbguest.installer_hooks[:before_install] = ["sudo yum update curl --disablerepo=epel", "sleep 1"]
+#        subsystem.vbguest.installer_hooks[:before_install] = ["sudo yum install -y yum-utils epel-release wget vim nano net-tools initscripts gcc make tar bind-utils nc git unzip sysstat tree httpd curl bower", "sleep 1"]
+      end
+
+	  subsystem.vm.provider :virtualbox do |vbox, override|
+	    puts "=====================: vm customizations"
+		vbox.gui = false
+        vbox.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+	    vbox.customize ["modifyvm", :id, "--memory", 512]
+    	vbox.customize ["modifyvm", :id, "--cableconnected1", "on"]
+      end
+
+	  puts "=====================: shared folders activation"
+	  subsystem.vm.hostname = "#{machineT}"
+
+      if (machineT == 'server')
+	    subsystem.vm.synced_folder "#{PATH_VAGRANT}/dist", "/var/www/html", type: "rsync"
+	  else
+ 	    subsystem.vm.synced_folder "#{PATH_VAGRANT}/clients/nextjs-auth", "/var/www/html/auth", type: "rsync"
+	    subsystem.vm.synced_folder "#{PATH_VAGRANT}/clients/nextjs-react", "/var/www/html/react", type: "rsync"
+	  end
+
+	  puts "=====================: saving active ip tables"
 	  subsystem.vm.provision "shell", inline: 'sudo iptables -S', privileged: true
 
 #	  subsystem.vm.provision "shell", inline: "#{$bootScript}"
 
+	  puts "=====================: activate the chef..."
 	  subsystem.vm.provision "chef_zero" do |chef|
 	  	chef.log_level = "warn"
 	    chef.install = false
-		if (machineNo.to_i-1 == 0)
-		    chef.add_role "server"
-		else
-		    chef.add_role "client"
-		end		
 		chef.arguments = "--chef-license accept -l debug -E lin --force-logger" # -j ./vm-config.json"
 
 	    chef.cookbooks_path = "../_cookbooks"
@@ -151,15 +155,20 @@ Vagrant.configure("2") do |config|
 	    chef.roles_path = "./chef/roles"
 	    chef.environments_path = "./chef/environments"
 	    chef.nodes_path = "./chef/nodes"
-
+		chef.add_role "#{machineT}"
+#		chef.synced_folder_type = "nfs"
 	    chef.environment = "dev"
 
-		# chef.add_recipe "apt::default"
-
-	    chef.run_list = VAGRANT_JSON.dig(:packages, :"basenode", :run_list)
+		chef.run_list = (machineNo.to_i-1 == 0) ? 
+		    VAGRANT_JSON.dig(:packages, :server, :run_list) :
+			VAGRANT_JSON.dig(:packages, :client, :run_list)
 	    chef.json = VAGRANT_JSON
 	  end
 
+	  puts "=====================: install node dependencies"
+	  subsystem.vm.provision "shell", inline: $nodeScript, privileged: false
+
+	  puts "=====================: restore ip tables from our list"
 	  subsystem.vm.provision "prechef", after: "chef", type: "shell", inline:<<-POSTSHELL
 		sudo iptables-restore < /config/iptables.rules
 	  POSTSHELL

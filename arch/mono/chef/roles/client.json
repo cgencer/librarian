@@ -3,7 +3,7 @@
 	"default_attributes": {
 	},
 	"json_class": "Chef::Role",
-    "description": "Monolith server application",
+    "description": "Monolith client application",
     "chef_type": "role",
 	"run_list": [ 
 		"recipe[micro-nodes]"
