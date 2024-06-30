@@ -6,6 +6,7 @@
     "description": "Monolith server application",
     "chef_type": "role",
 	"run_list": [ 
-		"recipe[micro-nodes]"
+		"recipe[micro-nodes]",
+    	"nginx"
 	]
 }

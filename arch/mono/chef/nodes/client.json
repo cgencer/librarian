@@ -1,0 +1,9 @@
+{
+  "name": "mono_client",
+  "hostname": "",
+  "run_list": [ 
+    "micro-essentials",
+    "nginx",
+	"role[client]"
+  ]
+}

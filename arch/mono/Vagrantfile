@@ -8,18 +8,14 @@ BOX_IMAGE = "minimal/centos7"
 # Get Chef json
 VAGRANT_JSON = JSON.parse(Pathname(__FILE__).dirname.join("vm-config.json").read, { symbolize_names: true })
 PATH_VAGRANT = File.expand_path('../..')
+PATH_DIST = File.expand_path('../../dist')
+PATH_CLIENTS = File.expand_path('../../clients')
+
+puts PATH_DIST
+
 NODE_COUNT = 2
 
 $yumScript = <<SCRIPT
-	sudo yum update
-	sudo yum update kernel
-	sudo yum groupinstall "Development tools"
-	sudo yum install kernel-devel
-	sudo sed -i "s/metalink=https/metalink=http/" /etc/yum.repos.d/epel.repo
-	sudo sed -i "s/baseurl=https/baseurl=http/" /etc/yum.repos.d/epel.repo
-	sudo yum makecache fast
-	sudo yum -y upgrade ca-certificates
-	sudo yum install -y yum-utils epel-release wget vim nano net-tools initscripts gcc make tar bind-utils nc git unzip sysstat tree httpd curl bower
 SCRIPT
 
 $nodeScript = <<SCRIPT
@@ -111,12 +107,13 @@ Vagrant.configure("2") do |config|
 				auto_correct: true
 	  end
 
-      subsystem.vm.provision "shell", inline: $yumScript, privileged: false
+#      subsystem.vm.provision "shell", inline: $yumScript, privileged: false
+	  subsystem.vm.provision "shell", path: "#{PATH_VAGRANT}/shell/provisioner.sh"
 
 	  if Vagrant.has_plugin?("vagrant-vbguest")
 	  	 subsystem.vbguest.iso_path = "#{ENV['HOME']}/Downloads/VBoxGuestAdditions_6.0.0.iso"
 	  	 subsystem.vbguest.auto_update = true
-	  	 subsystem.vbguest.installer_hooks[:before_install] = ["sudo yum update -y && sudo yum update kernel -y && sudo yum -y groupinstall 'Development tools' && sudo yum install -y kernel-devel yum-utils epel-release wget nano net-tools", "sleep 1"]
+#	  	 subsystem.vbguest.installer_hooks[:before_install] = ["sudo yum update -y && sudo yum update kernel -y && sudo yum -y groupinstall 'Development tools' && sudo yum install -y kernel-devel yum-utils epel-release wget nano net-tools", "sleep 1"]
 #		 subsystem.vbguest.installer_hooks[:before_install] = ["sudo yum update curl --disablerepo=epel", "sleep 1"]
 #        subsystem.vbguest.installer_hooks[:before_install] = ["sudo yum install -y yum-utils epel-release wget vim nano net-tools initscripts gcc make tar bind-utils nc git unzip sysstat tree httpd curl bower", "sleep 1"]
       end
@@ -127,16 +124,18 @@ Vagrant.configure("2") do |config|
         vbox.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
 	    vbox.customize ["modifyvm", :id, "--memory", 512]
     	vbox.customize ["modifyvm", :id, "--cableconnected1", "on"]
+    	vbox.customize ["modifyvm", :id, "--usb", "off"]
+    	vbox.customize ["modifyvm", :id, "--usbehci", "off"]
       end
 
 	  puts "=====================: shared folders activation"
 	  subsystem.vm.hostname = "#{machineT}"
 
       if (machineT == 'server')
-	    subsystem.vm.synced_folder "#{PATH_VAGRANT}/dist", "/var/www/html", type: "rsync"
+	    subsystem.vm.synced_folder "#{PATH_DIST}", "/var/www/html", type: "nfs"
 	  else
- 	    subsystem.vm.synced_folder "#{PATH_VAGRANT}/clients/nextjs-auth", "/var/www/html/auth", type: "rsync"
-	    subsystem.vm.synced_folder "#{PATH_VAGRANT}/clients/nextjs-react", "/var/www/html/react", type: "rsync"
+ 	    subsystem.vm.synced_folder "#{PATH_CLIENTS}/nextjs-auth", "/var/www/html/auth", type: "nfs"
+	    subsystem.vm.synced_folder "#{PATH_CLIENTS}/nextjs-react", "/var/www/html/react", type: "nfs"
 	  end
 
 	  puts "=====================: saving active ip tables"
