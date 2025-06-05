@@ -64,6 +64,9 @@ typings/
 # Output of 'npm pack'
 *.tgz
 
+_old_arch
+_old_arch/*
+
 # Yarn
 .yarn-integrity
 yarn-error.log
