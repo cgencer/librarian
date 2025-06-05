@@ -100,3 +100,5 @@ curl_trace.txt
 .flaskenv*
 !.env.project
 !.env.vault
+app-dev.json
+app-prod.json
